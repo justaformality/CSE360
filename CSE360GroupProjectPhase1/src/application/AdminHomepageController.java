@@ -1,6 +1,7 @@
 package application;
 
 import javafx.fxml.FXML;
+import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
@@ -12,22 +13,53 @@ import javafx.scene.control.ComboBox;
 import javafx.scene.control.TextInputDialog;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.geometry.Insets;
+import javafx.scene.Scene;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.layout.GridPane;
 
 import java.util.Optional;
 
 public class AdminHomepageController {
+	
+	private Main mainApp;
+
+    public AdminHomepageController(Main mainApp) {
+        this.mainApp = mainApp;
+    }
+
+    public Scene createHomepageScene() {
+        // Create UI elements for the homepage
+        Label welcomeLabel = new Label("Welcome to the Homepage!");
+        Button logoutButton = new Button("Logout");
+
+        // Create layout for the homepage
+        GridPane homepageLayout = new GridPane();
+        homepageLayout.setPadding(new Insets(10));
+        homepageLayout.setVgap(8);
+        homepageLayout.setHgap(10);
+        homepageLayout.add(welcomeLabel, 0, 0);
+        homepageLayout.add(logoutButton, 0, 1);
+
+        // Handle logout button click
+       //logoutButton.setOnAction(e -> mainApp.showLoginScene(null));
+
+        // Create and return the homepage scene
+        return new Scene(homepageLayout, 400, 200);
+    }
 
     @FXML
-    private TableView<User> userTableView;
+    public TableView<User> userTableView;
 
-    @FXML
+    
     private TableColumn<User, String> usernameColumn;
 
-    @FXML
+   
     private TableColumn<User, String> emailColumn;
 
-    @FXML
-    private TableColumn<User, String> roleColumn;
+   
+    private TableColumn<User, String> roleColumn; 
 
     private ObservableList<User> userList; // List to hold user data
 
@@ -41,7 +73,7 @@ public class AdminHomepageController {
         loadUsers();
     }
 
-    @FXML
+   
     private void handleInviteUser() {
         TextInputDialog dialog = new TextInputDialog();
         dialog.setTitle("Invite User");
@@ -66,7 +98,7 @@ public class AdminHomepageController {
         });
     }
 
-    @FXML
+    
     private void handleResetUserPassword() {
         TextInputDialog dialog = new TextInputDialog();
         dialog.setTitle("Reset User Password");
@@ -84,7 +116,7 @@ public class AdminHomepageController {
         });
     }
 
-    @FXML
+    
     private void handleDeleteUser() {
         TextInputDialog dialog = new TextInputDialog();
         dialog.setTitle("Delete User");
@@ -106,12 +138,12 @@ public class AdminHomepageController {
         });
     }
 
-    @FXML
+  
     private void handleListUsers() {
         loadUsers();
     }
 
-    @FXML
+  
     private void handleLogout() {
         // Log out the user and redirect to login
        
