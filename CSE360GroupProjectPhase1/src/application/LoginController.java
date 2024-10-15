@@ -8,6 +8,7 @@ import javafx.geometry.Insets;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
 public class LoginController {
@@ -48,7 +49,7 @@ public class LoginController {
         loginButton.setOnAction(e -> {
             String username = usernameField.getText();
             String password = passwordField.getText();
-            if (validateLogin(username, password)) {
+            if (validateLogin(username, password, primaryStage)) {
                 mainApp.showHomepage();
             } else {
                 messageLabel.setText("Invalid username or password.");
@@ -64,10 +65,10 @@ public class LoginController {
         // Create and return the login scene
         return new Scene(loginLayout, 300, 200);
     }
-
-    private boolean validateLogin(String username, String password) {
-    	try (Connection conn = DatabaseConnection.connect()) {
-            String query = "SELECT password, account_setup_complete, role FROM users WHERE username = ?";
+    
+    private boolean validateLogin(String username, String password, Stage primaryStage) {
+        try (Connection conn = DatabaseConnection.connect()) {
+            String query = "SELECT password, account_setup_complete, role, first_name, last_name FROM users WHERE username = ?";
             PreparedStatement pstmt = conn.prepareStatement(query);
             pstmt.setString(1, username);
             ResultSet rs = pstmt.executeQuery();
@@ -75,11 +76,21 @@ public class LoginController {
             if (rs.next()) {
                 String dbPassword = rs.getString("password"); // Get hashed password from the database
 
-             // Verify the plain text password against the hashed password
+                // Verify the plain text password against the hashed password
                 if (PasswordValidator.verifyPassword(password, dbPassword)) {
                     boolean accountSetupComplete = rs.getBoolean("account_setup_complete");
                     String role = rs.getString("role");
-                    mainApp.showHomepage();
+                    String firstName = rs.getString("first_name");
+                    String lastName = rs.getString("last_name");
+
+                    // If account setup is incomplete (no first name, last name, or not marked complete), show account setup
+                    if (firstName == null || lastName == null || !accountSetupComplete) {
+                        showAccountSetupScene(primaryStage, username);
+                    } else {
+                        // Redirect to the appropriate homepage based on role
+                    	mainApp.showHomepage();
+                        //redirectToHomepage(primaryStage, role);
+                    }
                 } else {
                     showErrorAlert("Invalid password.");
                 }
@@ -90,9 +101,66 @@ public class LoginController {
             e.printStackTrace();
             showErrorAlert("Login failed: " + e.getMessage());
         }
-       
-        return "admin".equals(username) && "password".equals(password);
+
+        return false; // Return false as a fallback; no need for default admin/password check anymore
     }
+
+    
+    private void showAccountSetupScene(Stage primaryStage, String username) {
+        VBox layout = new VBox(10);
+        Scene scene = new Scene(layout, 400, 400);
+
+        // Create UI elements for account setup
+        TextField emailField = new TextField();
+        emailField.setPromptText("Email");
+
+        TextField firstNameField = new TextField();
+        firstNameField.setPromptText("First Name");
+
+        TextField lastNameField = new TextField();
+        lastNameField.setPromptText("Last Name");
+
+        TextField middleNameField = new TextField();
+        middleNameField.setPromptText("Middle Name");
+
+        TextField preferredNameField = new TextField();
+        preferredNameField.setPromptText("Preferred Name");
+
+        Button finishButton = new Button("Finish");
+
+        finishButton.setOnAction(e -> {
+            String email = emailField.getText();
+            String firstName = firstNameField.getText();
+            String lastName = lastNameField.getText();
+            String middleName = middleNameField.getText();
+            String preferredName = preferredNameField.getText();
+
+            try (Connection conn = DatabaseConnection.connect()) {
+                // Update user details and mark account setup as complete
+                String updateSql = "UPDATE users SET email = ?, first_name = ?, last_name = ?, middle_name = ?, preferred_name = ?, account_setup_complete = TRUE WHERE username = ?";
+                PreparedStatement pstmt = conn.prepareStatement(updateSql);
+                pstmt.setString(1, email);
+                pstmt.setString(2, firstName);
+                pstmt.setString(3, lastName);
+                pstmt.setString(4, middleName);
+                pstmt.setString(5, preferredName);
+                pstmt.setString(6, username);
+                pstmt.executeUpdate();
+                
+                // Redirect to the appropriate homepage based on user role
+                mainApp.showHomepage();
+                //redirectToHomepage(primaryStage, getRoleByUsername(username));
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+                showErrorAlert("Account setup failed: " + ex.getMessage());
+            }
+        });
+
+        layout.getChildren().addAll(emailField, firstNameField, lastNameField, middleNameField, preferredNameField, finishButton);
+        primaryStage.setScene(scene);
+        primaryStage.show();
+    }
+    
     
     private void showErrorAlert(String message) {
         Alert alert = new Alert(Alert.AlertType.ERROR);
