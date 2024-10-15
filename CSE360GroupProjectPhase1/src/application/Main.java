@@ -3,9 +3,10 @@ package application;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-
+import java.sql.Statement;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -71,7 +72,7 @@ public class Main extends Application {
                 if (PasswordValidator.verifyPassword(password, dbPassword)) {
                     boolean accountSetupComplete = rs.getBoolean("account_setup_complete");
                     String role = rs.getString("role");
-
+                    System.out.println("load admin_homepage");
                     // Load admin_homepage.fxml for admin users
                     loadPage("admin_homepage.fxml");
                 } else {
@@ -190,15 +191,21 @@ public class Main extends Application {
         }
     }
 
-    private void loadPage(String fxmlFile) {
+   private void loadPage(String fxmlFile) {
         try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource(fxmlFile));
+        	 System.out.println("entering loadPage");
+        	FXMLLoader loader = new FXMLLoader(getClass().getResource("/"+fxmlFile));
+        	System.out.println(""+fxmlFile);
             Parent root = loader.load();
-            Stage stage = (Stage) userTableView.getScene().getWindow();
-            stage.setScene(new Scene(root));
-            stage.show();
+            System.out.println("FXMLfile loaded");
+            primaryStage.setScene(new Scene(root));
+            primaryStage.show();
+           //Stage stage = (Stage) userTableView.getScene().getWindow();
+            //stage.setScene(new Scene(root));
+            //stage.show();
         } catch (IOException e) {
             e.printStackTrace();
+            showErrorAlert("Page load failed: " + e.getMessage());
         }
     }
 
